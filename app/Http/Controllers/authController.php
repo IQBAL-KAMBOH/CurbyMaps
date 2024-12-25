@@ -162,50 +162,105 @@ class authController extends Controller
         \Log::info('Login Attempt:', $request->all());
         $request->merge(['userRole' => $request->userRole ?? 2]);
         $request->merge(['emailAddress' => $request->userName]);
-
-        if (Auth::attempt($request->only(['userRole', 'emailAddress', 'password']))) {
-            $user = Auth::user();
-
-            // Check if the user is active
-
-            if ($user->status == 1) {
-                \Log::info('Authentication Successful');
-
-                $user->update(['device_token' => $request->device_token]);
-
-                $user = User::where('emailAddress', $user->emailAddress)->with(['partner', 'userInterest', 'subsription'])->first();
-
-                $token = $user->createToken('Couple Konnects')->plainTextToken;
-                DeviceTokon::create([
-                    'userId' => $user->id,
-                    'token' => $request->device_token,
-                ]);
-                $success = [
-                    'isSuccessful' => true,
-                    'access_token' => "Bearer " . $token,
-                    'user' => $user,
-                ];
-                $response = [
-                    'data' => $success,
-                    'message' => 'Login Successfully'
-                ];
-
-                return response()->json($success, 200);
+        if($request->social_login==1){
+            $userByEmail = User::where('emailAddress',$request->userName)->with(['partner', 'userInterest', 'subsription'])->first();
+            if ($userByEmail) {
+                $userByEmail->update(['device_token' => $request->device_token]);
             } else {
-                \Log::info('Authentication Failed - User not active');
+                $userByEmail = User::create([
+                    'emailAddress' => $request->userName,
+                    'password' =>  bcrypt($request->userName),
+                    'device_token' => $request->device_token,
+                    'userRole' => 2,
+                ]);
+                $userByEmail = User::find($userByEmail->id);
+            }
+            $token=Auth::login($userByEmail);
+            $token = $userByEmail->createToken('Couple Konnects')->plainTextToken;
+            DeviceTokon::create([ 'userId' => $userByEmail->id,'token' => $request->device_token]);
+            $success = [
+                'isSuccessful' => true,
+                'access_token' => "Bearer " . $token,
+                'user' => $userByEmail,
+            ];
+            $response = [
+                'data' => $success,
+                'message' => 'Login Successfully'
+            ];
+
+            return response()->json($success, 200);
+        }elseif($request->social_login==2){
+            $userByEmail = User::where('emailAddress',$request->userName)->with(['partner', 'userInterest', 'subsription'])->first();
+            if ($userByEmail) {
+                $userByEmail->update(['device_token' => $request->device_token]);
+            } else {
+                $userByEmail = User::create([
+                    'emailAddress' => $request->userName,
+                    'password' =>  bcrypt($request->userName),
+                    'device_token' => $request->device_token,
+                    'userRole' => 2,
+                ]);
+                $userByEmail = User::find($userByEmail->id);
+            }
+            $token=Auth::login($userByEmail);
+            $token = $userByEmail->createToken('Couple Konnects')->plainTextToken;
+            DeviceTokon::create([ 'userId' => $userByEmail->id,'token' => $request->device_token]);
+            $success = [
+                'isSuccessful' => true,
+                'access_token' => "Bearer " . $token,
+                'user' => $userByEmail,
+            ];
+            $response = [
+                'data' => $success,
+                'message' => 'Login Successfully'
+            ];
+
+            return response()->json($success, 200);
+        }else{
+            if (Auth::attempt($request->only(['userRole', 'emailAddress', 'password']))) {
+                $user = Auth::user();
+
+                // Check if the user is active
+
+                if ($user->status == 1) {
+                    \Log::info('Authentication Successful');
+
+                    $user->update(['device_token' => $request->device_token]);
+
+                    $user = User::where('emailAddress', $user->emailAddress)->with(['partner', 'userInterest', 'subsription'])->first();
+
+                    $token = $user->createToken('Couple Konnects')->plainTextToken;
+                    DeviceTokon::create([
+                        'userId' => $user->id,
+                        'token' => $request->device_token,
+                    ]);
+                    $success = [
+                        'isSuccessful' => true,
+                        'access_token' => "Bearer " . $token,
+                        'user' => $user,
+                    ];
+                    $response = [
+                        'data' => $success,
+                        'message' => 'Login Successfully'
+                    ];
+
+                    return response()->json($success, 200);
+                } else {
+                    \Log::info('Authentication Failed - User not active');
+                    $response = [
+                        'isSuccessFul' => false,
+                        'message' => 'User not active',
+                    ];
+                    return response()->json($response, 401);
+                }
+            } else {
+                \Log::info('Authentication Failed');
                 $response = [
                     'isSuccessFul' => false,
-                    'message' => 'User not active',
+                    'message' => 'Incorrect Credentials',
                 ];
                 return response()->json($response, 401);
             }
-        } else {
-            \Log::info('Authentication Failed');
-            $response = [
-                'isSuccessFul' => false,
-                'message' => 'Incorrect Credentials',
-            ];
-            return response()->json($response, 401);
         }
     }
 
@@ -398,11 +453,11 @@ class authController extends Controller
         }
     }
 
-  
-     * Fetch User Subsription plan this api
-     *
-     * @return \Illuminate\Http\Response
-     */
+
+    //  * Fetch User Subsription plan this api
+    //  *
+    //  * @return \Illuminate\Http\Response
+    //  */
     public function FetchUserSubsription(Request $request)
     {
         $userAuth = $request->header('Authorization');
@@ -492,10 +547,10 @@ class authController extends Controller
 
             $users = User::select(
                 "users.*",
-                DB::raw("6371 * acos(cos(radians(" . $lat . ")) 
-                        * cos(radians(users.Latitude)) 
-                        * cos(radians(users.Longitude) - radians(" . $lon . ")) 
-                        + sin(radians(" . $lat . ")) 
+                DB::raw("6371 * acos(cos(radians(" . $lat . "))
+                        * cos(radians(users.Latitude))
+                        * cos(radians(users.Longitude) - radians(" . $lon . "))
+                        + sin(radians(" . $lat . "))
                         * sin(radians(users.Latitude))) AS distance")
             )
                 ->where("Latitude", '!=', null)
@@ -919,7 +974,7 @@ class authController extends Controller
             ], 400);
         }
         $otp = 2222;
-        // $otp = rand(1000, 9999);
+        $otp = rand(1000, 9999);
         // ******Send OTP through Twilio Service when the service is available
         // $message = "Your OTP is $otp. Please use this code to complete the verification process for couples Konnect";
         // $this->sendMessage($message, $request->phone_number);
