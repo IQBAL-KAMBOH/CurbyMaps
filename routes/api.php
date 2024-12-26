@@ -38,6 +38,7 @@ Route::put('/users/update/{id}', 'App\Http\Controllers\authController@userUpdate
 Route::apiResource('couples/categories', CouplesController::class);
 Route::post('send-otp', [authController::class, 'sendOTP']);
 Route::post('verify-otp', [authController::class, 'verifyOTP']);
+Route::post('verify-phone', [authController::class, 'verifyRegisterOTP']);
 //Admin Fetch interests
 Route::get('fetch/interests', [InterestsController::class, 'fetchAdminInterests']);
 //login user password forget
@@ -52,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('fatch/all/users', 'App\Http\Controllers\authController@allUser');
     //required doctorCategories=id (Category id after fatch data)
     Route::get('fatch/Category/users', 'App\Http\Controllers\authController@fatchUsersByCategory');
-    //logout 
+    //logout
     Route::post('/logout', 'App\Http\Controllers\authController@userLogout');
     //map route
     Route::post('user/map', 'App\Http\Controllers\authController@mapStore');
@@ -77,7 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('del/interests', [InterestsController::class, 'destroyAdminInterest']);
     //Image upload end point
     Route::apiResource('upload/image', UploadImageController::class);
-    //send friend request with Notification post and get for friendId 
+    //send friend request with Notification post and get for friendId
     Route::apiResource('send/request', FriendRequestController::class);
     // Send Messages API's
     Route::apiResource('chat/add', ChatMessageController::class);
@@ -91,7 +92,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('all/subscription', SubscriptionController::class);
     //post notification profile view
     Route::post('profile/view', [FriendRequestController::class, 'profileViews']);
-    //get all user notification 
+    //get all user notification
     Route::get('user/notifications', [FriendRequestController::class, 'getNotifications']);
     //buy user Subscription
     Route::apiResource('buy/subscription', UserSubscriptionController::class);

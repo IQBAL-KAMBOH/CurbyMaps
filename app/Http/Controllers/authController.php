@@ -133,11 +133,20 @@ class authController extends Controller
 
             ];
             $partner = partnerDetails::create($partnerData);
-            $token = $user->createToken('Couple Konnects')->plainTextToken;
+            $otp = rand(1000, 9999);
+            // ******Send OTP through Twilio Service when the service is available
+            // $message = "Your OTP is $otp. Please use this code to complete the verification process for couples Konnect";
+            // $this->sendMessage($message, $request->phone_number);
+            UserPhoneVerification::updateOrCreate([
+                'phone_number' => $input['PhoneNo'],
+                'otp' => $otp
+            ]);
+            //$token = $user->createToken('Couple Konnects')->plainTextToken;
             $user['partner'] = $partner;
             $response = [
                 'isSuccessful' => true,
-                'access_token' => "Bearer " . $token,
+                'otp' => $otp,
+                'message' => "OTP Sent Successfully",
                 'user' => $user,
             ];
             DB::commit();
@@ -148,6 +157,37 @@ class authController extends Controller
                 'message' => $e->getMessage(),
             ];
             return response()->json($response, 400);
+        }
+    }
+    public function verifyRegisterOTP(Request $request)
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'phone_number' => 'required|exists:users,PhoneNo',
+                'otp' => 'required'
+            ]
+        );
+        if ($validator->fails()) {
+            return response()->json(['status' => 'Validation failed', 'message' => $validator->errors()->first(),], 400);
+        }
+        $user = User::where('PhoneNo',$request->phone_number)->first();
+        if($user){
+            $getDetails = UserPhoneVerification::where(['phone_number' => $request->phone_number, 'otp' => $request->otp])->first();
+            if (!$getDetails) {
+                return response()->json(['status' => false, 'message' => "Invalid OTP Code"], 400);
+            }
+            $getDetails->delete();
+            $token = $user->createToken('Couple Konnects')->plainTextToken;
+            $user['partner'] = $user->partner;
+            $response = [
+                'isSuccessful' => true,
+                'access_token' => "Bearer " . $token,
+                'user' => $user,
+            ];
+            return response()->json($response, 200);
+        }else{
+            return response()->json(['status' => false, 'message' => "User Not Found"], 401);
         }
     }
 
