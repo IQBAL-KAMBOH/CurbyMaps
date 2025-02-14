@@ -106,6 +106,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get_users_in_radius', [authController::class, 'getUsersInRadius']);
     //user image Route against userId
     Route::get('user/image', [UploadImageController::class, 'usersImage']);
+
+    Route::get('/paypal/success', [UserSubscriptionController::class, 'paypalSuccess'])->name('paypal.success');
+    Route::get('/paypal/cancel', [UserSubscriptionController::class, 'paypalCancel'])->name('paypal.cancel');
 });
 
 Route::any('{any}', 'App\Http\Controllers\authController@handle')->where('any', '.*');

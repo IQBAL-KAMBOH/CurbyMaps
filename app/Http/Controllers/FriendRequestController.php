@@ -21,7 +21,7 @@ class FriendRequestController extends Controller
      */
     public function index(Request $request)
     {
-        
+
         try {
             $friendId = auth()->id();
             DB::beginTransaction();
