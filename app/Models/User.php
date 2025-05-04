@@ -24,26 +24,15 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'userRole',
-        'coupleCategories',
-        'userName',
-        'title',
-        'emailAddress',
+        'full_name',
+        'email',
         'password',
-        'coupleName',
-        'age',
+        'city',
+        'post_code',
         'PhoneNo',
-        'gender',
-        'height',
-        'dob',
-        'bio',
-        'profileImage',
-        'Latitude',
-        'Longitude',
-        'status',
-        'email_verified_at',
-        'remember_token',
-        'created_at',
-        'updated_at',
+        'car_number',
+        'car_model',
+
     ];
 
     /**

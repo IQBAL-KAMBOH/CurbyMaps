@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('upload_images', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('userId');
-            $table->foreign('userId')->references('id')->on('users')->onDelete('cascade');
             $table->longText('Image')->nullable();
             $table->timestamps();
         });

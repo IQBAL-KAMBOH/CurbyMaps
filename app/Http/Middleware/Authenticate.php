@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
-
+use Symfony\Component\HttpFoundation\Response;
 class Authenticate extends Middleware
 {
     /**
@@ -12,10 +12,10 @@ class Authenticate extends Middleware
      * @param  \Illuminate\Http\Request  $request
      * @return string|null
      */
-    protected function redirectTo($request)
+     protected function redirectTo($request)
     {
-        if (! $request->expectsJson()) {
-            return route('login');
+        if (!$request->expectsJson()) {
+            abort(Response::HTTP_FORBIDDEN, 'You are not authenticated to access this resource.');
         }
     }
 }
