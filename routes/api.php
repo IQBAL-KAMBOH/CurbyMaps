@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UploadImageController;
 use App\Http\Controllers\FAQController;
 use App\Http\Controllers\PrivacyPolicyController;
-
+use App\Http\Controllers\Api\ParkingSearchController;
+use App\Http\Controllers\FrequentLocationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,7 @@ Route::post('verify-phone', [authController::class, 'verifyRegisterOTP']);
 //login user password forget
 Route::post('forget/password', 'App\Http\Controllers\ProfileController@forgetPassword');
 
+
 //Building Controller
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -57,6 +59,12 @@ Route::middleware('auth:sanctum')->group(function () {
     //privacy policy Route
     Route::apiResource('privacy/policy', PrivacyPolicyController::class);
     Route::get('user/image', [UploadImageController::class, 'usersImage']);
+    Route::get('/parking/search/google', [ParkingSearchController::class, 'searchNearbyGoogle']);
+    // Route to get details for a specific Google Place ID
+    Route::get('/parking/google-place-details/{placeId}', [ParkingSearchController::class, 'getPlaceDetails']);
+    Route::apiResource('frequent-locations', FrequentLocationController::class);
+    Route::get('/profile', [authController::class, 'getProfile']);
+    Route::post('/profile/update', [authController::class, 'updateProfile']);
 });
 
 Route::any('{any}', 'App\Http\Controllers\authController@handle')->where('any', '.*');

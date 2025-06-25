@@ -60,24 +60,15 @@ class User extends Authenticatable
         'seniorityDate' => 'string'
     ];
 
-    public function partner()
-    {
-        return $this->hasOne(partnerDetails::class, 'coupleId');
-    }
-    public function subsription()
-    {
-        return $this->hasOne(UserSubscription::class, 'userId')->latest();
-    }
-    public function userInterest()
-    {
-        return $this->hasMany(Interests::class, 'userId');
-    }
+
+
     public function deviceTokens()
     {
-        return $this->hasMany(DeviceTokon::class, 'userId');
+        return $this->hasMany(DeviceToken::class, 'userId');
     }
-    public function interests()
-    {
-        return $this->hasMany(Interests::class, 'userId', 'id');
-    }
+
+    public function frequentLocations()
+{
+    return $this->hasMany(FrequentLocation::class);
+}
 }

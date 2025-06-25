@@ -101,9 +101,12 @@ class authController extends Controller
         try {
             DB::beginTransaction();
             $user = User::create($userData);
+            $emailotp = $this->sendOTP($user->email);
+            $phoneotp = $this->sendOTPPhone($user->PhoneNo);
+
             $response = [
                 'isSuccessful' => true,
-                'user' => $user,
+                'message' => 'Registration successful. Please verify your phone number with the OTP=' . $phoneotp . ' we sent. And Email  with the OTP=' . $emailotp,
             ];
             DB::commit();
             return response()->json($response, 200);
@@ -135,7 +138,7 @@ class authController extends Controller
             }
             $getDetails->delete();
             $token = $user->createToken('Curby Maps')->plainTextToken;
-            $user['partner'] = $user->partner;
+
             $response = [
                 'isSuccessful' => true,
                 'access_token' => "Bearer " . $token,
@@ -297,11 +300,24 @@ class authController extends Controller
 
         $otp = 2222;
         $otp = rand(1000, 9999);
-        // ******Send OTP through Twilio Service when the service is available
-        // $message = "Your OTP is $otp. Please use this code to complete the verification process for couples Konnect";
-        // $this->sendMessage($message, $request->phone_number);
+
         UserOtp::updateOrCreate([
             'email' => $vildateemail
+        ], [
+            'otp' => $otp
+        ]);
+        return $otp;
+    }
+    public static function sendOTPPhone($phone)
+    {
+
+        $otp = 2222;
+        $otp = rand(1000, 9999);
+        // ******Send OTP through Twilio Service when the service is available
+        $message = "Your OTP is $otp. Please use this code to complete the verification process";
+        // $this->sendMessage($message, $phone);
+        UserPhoneVerification::updateOrCreate([
+            'phone_number' => $phone
         ], [
             'otp' => $otp
         ]);
@@ -335,5 +351,37 @@ class authController extends Controller
         ];
 
         return response()->json(['success' => true, 'data' => $success, 'message' => 'Verify OTP successfully.'], 200);
+    }
+    public function getProfile(Request $request)
+    {
+        return response()->json([
+            'isSuccessful' => true,
+            'user' => Auth::user(),
+        ], 200);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $validator = Validator::make($request->all(), [
+            'full_name' => 'sometimes|required|string',
+            'language' => 'sometimes|required|string|in:en,es,fr', // Add all supported languages
+            'car_number' => 'sometimes|required|string',
+            'car_model' => 'sometimes|required|string',
+            // Add any other fields the user can update
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => $validator->errors()->first()], 400);
+        }
+
+        $user->update($request->all());
+
+        return response()->json([
+            'isSuccessful' => true,
+            'message' => 'Profile updated successfully.',
+            'user' => $user
+        ], 200);
     }
 }

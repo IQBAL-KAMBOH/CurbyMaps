@@ -16,7 +16,7 @@ class UserSeeder extends Seeder
     public function run()
     {
         $users = [
-            ['userRole' => 1, 'userName' => 'Stephan de Vries', 'title' => 'Admin', 'emailAddress' => 'admin@yopmail.com', 'password' => bcrypt('admin123')],
+            ['userRole' => 1, 'full_name' => 'Stephan de Vries','email' => 'admin@yopmail.com', 'password' => bcrypt('admin123')],
         ];
 
         foreach ($users as $user) {
