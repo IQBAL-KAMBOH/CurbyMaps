@@ -8,7 +8,11 @@ use App\Http\Controllers\FAQController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\Api\ParkingSearchController;
 use App\Http\Controllers\FrequentLocationController;
+    // routes/api.php
 
+use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\FollowController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -65,6 +69,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('frequent-locations', FrequentLocationController::class);
     Route::get('/profile', [authController::class, 'getProfile']);
     Route::post('/profile/update', [authController::class, 'updateProfile']);
+
+
+
+
+    // Posts API
+    Route::apiResource('posts', PostController::class)->except(['update']);
+    Route::post('posts/{post}/like', [PostController::class, 'like']);
+    Route::delete('posts/{post}/unlike', [PostController::class, 'unlike']);
+
+    // Comments API (nested under posts)
+    Route::get('posts/{post}/comments', [CommentController::class, 'index']);
+    Route::post('posts/{post}/comments', [CommentController::class, 'store']);
+
+    // Follow/Unfollow API
+    Route::post('users/{user}/follow', [FollowController::class, 'store']);
+    Route::delete('users/{user}/unfollow', [FollowController::class, 'destroy']);
+
 });
 
 Route::any('{any}', 'App\Http\Controllers\authController@handle')->where('any', '.*');

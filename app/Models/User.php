@@ -27,11 +27,14 @@ class User extends Authenticatable
         'full_name',
         'email',
         'password',
+        'profileImage',
         'city',
         'post_code',
         'PhoneNo',
         'car_number',
         'car_model',
+        'language',
+        'bio'
 
     ];
 
@@ -68,7 +71,22 @@ class User extends Authenticatable
     }
 
     public function frequentLocations()
-{
-    return $this->hasMany(FrequentLocation::class);
-}
+    {
+        return $this->hasMany(FrequentLocation::class);
+    }
+    public function following()
+    {
+        return $this->belongsToMany(User::class, 'followers', 'user_id', 'following_id');
+    }
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
+    /**
+     * The users that follow this user.
+     */
+    public function followers()
+    {
+        return $this->belongsToMany(User::class, 'followers', 'following_id', 'user_id');
+    }
 }

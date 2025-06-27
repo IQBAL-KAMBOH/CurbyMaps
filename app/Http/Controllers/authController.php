@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DeviceToken;
 use App\Models\partnerDetails;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Models\UserOtp;
@@ -13,6 +14,7 @@ use App\Models\userRole;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Twilio\Rest\Client;
+use Illuminate\Support\Facades\Log;
 
 // use DateTime;
 
@@ -158,107 +160,75 @@ class authController extends Controller
      */
     public function login(Request $request)
     {
-
         $request->merge(['userRole' => $request->userRole ?? 2]);
-        $request->merge(['email' => $request->email]);
-        if ($request->social_login == 1) {
+
+        if (in_array($request->social_login, [1, 2])) {
             $userByEmail = User::where('email', $request->email)->first();
+
             if ($userByEmail) {
+                // Only update device token if user exists
                 $userByEmail->update(['device_token' => $request->device_token]);
             } else {
+                // Create new user with only basic fields
                 $userByEmail = User::create([
                     'email' => $request->email,
-                    'password' =>  bcrypt($request->email),
+                    'password' => bcrypt($request->email), // Temporary default
                     'device_token' => $request->device_token,
                     'userRole' => 2,
                 ]);
-                $userByEmail = User::find($userByEmail->id);
             }
-            $token = Auth::login($userByEmail);
+
+            // Authenticate user and generate token
+            Auth::login($userByEmail);
             $token = $userByEmail->createToken('Curby Maps')->plainTextToken;
-            // DeviceToken::create(['userId' => $userByEmail->id, 'token' => $request->device_token]);
-            $success = [
-                'isSuccessful' => true,
-                'access_token' => "Bearer " . $token,
-                'user' => $userByEmail,
-            ];
-            $response = [
-                'data' => $success,
-                'message' => 'Login Successfully'
-            ];
 
-            return response()->json($success, 200);
-        } elseif ($request->social_login == 2) {
-            $userByEmail = User::where('email', $request->email)->first();
-            if ($userByEmail) {
-                $userByEmail->update(['device_token' => $request->device_token]);
-            } else {
-                $userByEmail = User::create([
-                    'email' => $request->email,
-                    'password' =>  bcrypt($request->email),
-                    'device_token' => $request->device_token,
-                    'userRole' => 2,
-                ]);
-                $userByEmail = User::find($userByEmail->id);
+            // Save device token (only for social_login == 2)
+            if ($request->social_login == 2) {
+                DeviceToken::updateOrCreate(
+                    ['userId' => $userByEmail->id],
+                    ['token' => $request->device_token]
+                );
             }
-            $token = Auth::login($userByEmail);
-            $token = $userByEmail->createToken('Curby Maps')->plainTextToken;
-            DeviceToken::create(['userId' => $userByEmail->id, 'token' => $request->device_token]);
-            $success = [
+
+            return response()->json([
                 'isSuccessful' => true,
-                'access_token' => "Bearer " . $token,
+                'access_token' => 'Bearer ' . $token,
                 'user' => $userByEmail,
-            ];
-            $response = [
-                'data' => $success,
-                'message' => 'Login Successfully'
-            ];
-
-            return response()->json($success, 200);
-        } else {
-            if (Auth::attempt($request->only(['userRole', 'email', 'password']))) {
-                $user = Auth::user();
-                // Check if the user is active
-                if ($user->status == 1) {
-                    \Log::info('Authentication Successful');
-
-                    $user->update(['device_token' => $request->device_token]);
-
-                    $user = User::where('email', $user->email)->first();
-
-                    $token = $user->createToken('Curby Maps')->plainTextToken;
-                    DeviceToken::create([
-                        'userId' => $user->id,
-                        'token' => $request->device_token,
-                    ]);
-                    $success = [
-                        'isSuccessful' => true,
-                        'access_token' => "Bearer " . $token,
-                        'user' => $user,
-                    ];
-                    $response = [
-                        'data' => $success,
-                        'message' => 'Login Successfully'
-                    ];
-
-                    return response()->json($success, 200);
-                } else {
-                    \Log::info('Authentication Failed - User not active');
-                    $response = [
-                        'isSuccessFul' => false,
-                        'message' => 'User not active',
-                    ];
-                    return response()->json($response, 401);
-                }
-            } else {
-
-                $response = [
-                    'isSuccessFul' => false,
-                    'message' => 'Incorrect Credentials',
-                ];
-                return response()->json($response, 401);
-            }
+            ], 200);
         }
+
+        // Normal email/password login
+        if (Auth::attempt($request->only(['userRole', 'email', 'password']))) {
+            $user = Auth::user();
+
+            if ($user->status != 1) {
+                Log::info('Authentication Failed - User not active');
+                return response()->json([
+                    'isSuccessful' => false,
+                    'message' => 'User not active',
+                ], 401);
+            }
+
+            $user->update(['device_token' => $request->device_token]);
+
+            DeviceToken::updateOrCreate(
+                ['userId' => $user->id],
+                ['token' => $request->device_token]
+            );
+
+            $token = $user->createToken('Curby Maps')->plainTextToken;
+
+            return response()->json([
+                'isSuccessful' => true,
+                'access_token' => 'Bearer ' . $token,
+                'user' => $user,
+            ], 200);
+        }
+
+        return response()->json([
+            'isSuccessful' => false,
+            'message' => 'Incorrect Credentials',
+        ], 401);
     }
 
     public function handle(Request $request)
@@ -354,29 +324,57 @@ class authController extends Controller
     }
     public function getProfile(Request $request)
     {
+        // 1. Get the currently authenticated user instance.
+        $user = Auth::user();
+
+        // 2. Efficiently load the counts of the relationships onto the user object.
+        // This adds `followers_count`, `following_count`, and `posts_count`
+        // properties to the $user object without loading all the data.
+        $user->loadCount(['followers', 'following', 'posts']);
+
+        // 3. Return the response. The $user object now contains the counts.
         return response()->json([
             'isSuccessful' => true,
-            'user' => Auth::user(),
+            'user' => $user,
         ], 200);
     }
+
 
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
 
         $validator = Validator::make($request->all(), [
-            'full_name' => 'sometimes|required|string',
-            'language' => 'sometimes|required|string|in:en,es,fr', // Add all supported languages
-            'car_number' => 'sometimes|required|string',
-            'car_model' => 'sometimes|required|string',
-            // Add any other fields the user can update
+            'full_name'   => 'sometimes|required|string',
+            'language'    => 'sometimes|required|string',
+            'car_number'  => 'sometimes|required|string',
+            'car_model'   => 'sometimes|required|string',
+            'profileImage' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => false, 'message' => $validator->errors()->first()], 400);
         }
 
-        $user->update($request->all());
+        $data = $request->all();
+
+        // Handle profile image upload
+        if ($request->hasFile('profileImage')) {
+            $image = $request->file('profileImage');
+            $imagePath = $image->store('profileImages', 'public'); // stores relative path
+
+            // Delete old image if it exists
+            if ($user->profileImage) {
+                $oldPath = str_replace(asset('storage') . '/', '', $user->profileImage);
+                // Storage::disk('public')->delete($oldPath);
+            }
+
+            // Save full URL in the database
+            $data['profileImage'] = asset('storage/' . $imagePath);
+        }
+
+
+        $user->update($data);
 
         return response()->json([
             'isSuccessful' => true,
