@@ -327,18 +327,33 @@ class authController extends Controller
         // 1. Get the currently authenticated user instance.
         $user = Auth::user();
 
-        // 2. Efficiently load the counts of the relationships onto the user object.
-        // This adds `followers_count`, `following_count`, and `posts_count`
-        // properties to the $user object without loading all the data.
-        $user->loadCount(['followers', 'following', 'posts']);
-
-        // 3. Return the response. The $user object now contains the counts.
+        $user = User::with(['followers', 'following', 'posts'])
+            ->where('id', $user->id)
+            ->first();
         return response()->json([
             'isSuccessful' => true,
             'user' => $user,
         ], 200);
     }
+    public function getUserInfo($id)
+    {
 
+
+        $user = User::with(['followers', 'following', 'posts'])
+            ->where('id', $id)
+            ->first();
+        if (!$user) {
+            return response()->json([
+                'isSuccessful' => false,
+                'message' => 'User not found',
+            ], 404);
+        } else {
+            return response()->json([
+                'isSuccessful' => true,
+                'user' => $user,
+            ], 200);
+        }
+    }
 
     public function updateProfile(Request $request)
     {

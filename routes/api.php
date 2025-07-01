@@ -8,7 +8,7 @@ use App\Http\Controllers\FAQController;
 use App\Http\Controllers\PrivacyPolicyController;
 use App\Http\Controllers\Api\ParkingSearchController;
 use App\Http\Controllers\FrequentLocationController;
-    // routes/api.php
+// routes/api.php
 
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\CommentController;
@@ -69,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('frequent-locations', FrequentLocationController::class);
     Route::get('/profile', [authController::class, 'getProfile']);
     Route::post('/profile/update', [authController::class, 'updateProfile']);
+    Route::get('/user-info/{id}', [authController::class, 'getUserInfo']);
 
 
 
@@ -85,7 +86,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Follow/Unfollow API
     Route::post('users/{user}/follow', [FollowController::class, 'store']);
     Route::delete('users/{user}/unfollow', [FollowController::class, 'destroy']);
-
 });
 
 Route::any('{any}', 'App\Http\Controllers\authController@handle')->where('any', '.*');

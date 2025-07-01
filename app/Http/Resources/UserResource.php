@@ -14,6 +14,9 @@ class UserResource extends JsonResource
             'full_name' => $this->full_name, // Assuming you have a 'name' column
             'email' => $this->email, // Example: "@annkorkowski"
             'avatar_url' => $this->profileImage ?? 'https://ui-avatars.com/api/?name=' . urlencode($this->full_name),
+            'followers' => $this->followers->pluck('id') ?? [],
+            'following' => $this->following->pluck('id') ?? [],
+
             // Add more fields as needed
         ];
     }

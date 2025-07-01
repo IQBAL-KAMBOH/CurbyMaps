@@ -12,7 +12,7 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'content' => $this->content,
-            'image_url' => $this->image_path ? Storage::url($this->image_path) : null,
+            'image_url' => $this->image_path ? $this->image_path : null,
             'created_at_human' => $this->created_at->diffForHumans(),
             'user' => new UserResource($this->whenLoaded('user')),
             'likes_count' => $this->whenCounted('likes'),
