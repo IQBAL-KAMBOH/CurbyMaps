@@ -14,13 +14,15 @@ class PostResource extends JsonResource
             'content' => $this->content,
             'image_url' => $this->image_path ? $this->image_path : null,
             'created_at_human' => $this->created_at->diffForHumans(),
-            'user' => new UserResource($this->whenLoaded('user')),
+            'likes' => $this->whenLoaded('likes'),
             'likes_count' => $this->whenCounted('likes'),
+            'comments' => $this->whenLoaded('comments'),
             'comments_count' => $this->whenCounted('comments'),
             'is_liked_by_user' => $this->when(auth()->check(), function () {
                 // Check if the authenticated user has liked this post
                 return $this->likes()->where('user_id', auth()->id())->exists();
             }),
+            'user' => new UserResource($this->whenLoaded('user')),
         ];
     }
 }

@@ -12,7 +12,7 @@ class PostController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Post::with('user')->withCount(['likes', 'comments'])->orderBy('created_at', 'desc');
+        $query = Post::with('user','likes','comments')->withCount(['likes', 'comments'])->orderBy('created_at', 'desc');
 
         if ($request->filter === 'following') {
             $followingIds = $request->user()->following()->pluck('users.id');
@@ -47,7 +47,8 @@ class PostController extends Controller
 
     public function show(Post $post)
     {
-        $post->load('user')->loadCount(['likes', 'comments']);
+        $post->load('user','likes','comments')->loadCount(['likes', 'comments']);
+
         return new PostResource($post);
     }
 
