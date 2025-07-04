@@ -23,7 +23,7 @@ class UserPostResource extends JsonResource
             'language' => $this->language,
             'bio' => $this->bio,
             // The accessor from the User model provides the full URL
-            'profileImage' => $this->profile_image,
+            'profileImage' => $this->profileImage,
             'status' => (string) $this->status,
 
             // **IMPORTANT**: This includes the FULL user object for each follower/following.
