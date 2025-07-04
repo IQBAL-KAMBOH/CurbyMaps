@@ -82,6 +82,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Post::class);
     }
+
     /**
      * The users that follow this user.
      */

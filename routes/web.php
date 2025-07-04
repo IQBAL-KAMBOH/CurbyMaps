@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Services\FirebaseService;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +18,18 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+
+
+Route::get('/test-notification', function () {
+    $userId = 2; // Change to real user ID with token
+    $firebase = new FirebaseService();
+
+    $result = $firebase->sendToUser(
+        $userId,
+        'Test Notification',
+        'This is a test message from CurbyMaps Laravel backend',
+        ['type' => 'test']
+    );
+
+    return response()->json(['result' => $result]);
+});

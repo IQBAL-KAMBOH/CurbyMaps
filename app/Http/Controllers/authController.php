@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\Models\DeviceToken;
 use App\Models\partnerDetails;
 use Illuminate\Http\Request;
@@ -342,17 +343,7 @@ class authController extends Controller
         $user = User::with(['followers', 'following', 'posts'])
             ->where('id', $id)
             ->first();
-        if (!$user) {
-            return response()->json([
-                'isSuccessful' => false,
-                'message' => 'User not found',
-            ], 404);
-        } else {
-            return response()->json([
-                'isSuccessful' => true,
-                'user' => $user,
-            ], 200);
-        }
+       return new UserResource($user);
     }
 
     public function updateProfile(Request $request)
@@ -395,6 +386,16 @@ class authController extends Controller
             'isSuccessful' => true,
             'message' => 'Profile updated successfully.',
             'user' => $user
+        ], 200);
+    }
+    public function getNotifications(Request $request)
+    {
+        $user = Auth::user();
+        $notifications = $user->notifications()->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'isSuccessful' => true,
+            'notifications' => $notifications,
         ], 200);
     }
 }

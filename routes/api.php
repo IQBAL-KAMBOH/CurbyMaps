@@ -86,6 +86,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Follow/Unfollow API
     Route::post('users/{user}/follow', [FollowController::class, 'store']);
     Route::delete('users/{user}/unfollow', [FollowController::class, 'destroy']);
+
+    /// users notification
+    Route::get('users/notifications', [authController::class, 'getNotifications']);
 });
 
 Route::any('{any}', 'App\Http\Controllers\authController@handle')->where('any', '.*');
