@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\UserResource;
+use App\Http\Resources\UserPostResource;
 use App\Models\DeviceToken;
 use App\Models\partnerDetails;
 use Illuminate\Http\Request;
@@ -338,24 +338,38 @@ class authController extends Controller
     }
     public function getUserInfo($id)
     {
-        $user = User::with(['followers', 'following'])->with([
-            // This is the key: we define HOW to load the 'posts' relationship
+
+
+         $user = User::with(['followers', 'following']) ->with([
             'posts' => function ($query) {
                 $query->withCount(['likes', 'comments']);
                 if (auth()->check()) {
                     $query->with(['likes' => function ($likeQuery) {
                         $likeQuery->where('user_id', auth()->id());
                     }]);
-                    $query->with(['comments' => function ($likeQuery) {
+                     $query->with(['comments' => function ($likeQuery) {
                         $likeQuery->where('user_id', auth()->id());
                     }]);
                 }
                 $query->orderBy('created_at', 'desc');
             }
         ])
-            ->where('id', $id)
-            ->first();
-        return new UserResource($user);
+        ->find($id); // find() is a clean way to get a model by its primary key
+
+    if (!$user) {
+        return response()->json([
+            'isSuccessful' => false,
+            'message' => 'User not found',
+        ], 404);
+    }
+
+    // Manually construct the response to match your exact format.
+    // We instantiate the UserResource, which formats the user data,
+    // and then place it inside our custom wrapper.
+    return response()->json([
+        'isSuccessful' => true,
+        'user' => new UserPostResource($user), // The resource handles all the complex formatting
+    ], 200);
     }
 
     public function updateProfile(Request $request)
