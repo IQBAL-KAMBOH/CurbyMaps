@@ -16,6 +16,7 @@ class UserResource extends JsonResource
             'avatar_url' => $this->profileImage ?? 'https://ui-avatars.com/api/?name=' . urlencode($this->full_name),
             'followers' => $this->followers->pluck('id') ?? [],
             'following' => $this->following->pluck('id') ?? [],
+            'posts' => PostResource::collection($this->whenLoaded('posts')),
 
             // Add more fields as needed
         ];

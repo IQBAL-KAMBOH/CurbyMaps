@@ -338,12 +338,24 @@ class authController extends Controller
     }
     public function getUserInfo($id)
     {
-
-
-        $user = User::with(['followers', 'following', 'posts'])
+        $user = User::with(['followers', 'following'])->with([
+            // This is the key: we define HOW to load the 'posts' relationship
+            'posts' => function ($query) {
+                $query->withCount(['likes', 'comments']);
+                if (auth()->check()) {
+                    $query->with(['likes' => function ($likeQuery) {
+                        $likeQuery->where('user_id', auth()->id());
+                    }]);
+                    $query->with(['comments' => function ($likeQuery) {
+                        $likeQuery->where('user_id', auth()->id());
+                    }]);
+                }
+                $query->orderBy('created_at', 'desc');
+            }
+        ])
             ->where('id', $id)
             ->first();
-       return new UserResource($user);
+        return new UserResource($user);
     }
 
     public function updateProfile(Request $request)
